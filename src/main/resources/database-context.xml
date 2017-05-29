@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:cxf="http://camel.apache.org/schema/cxf" xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/cxf
+       http://camel.apache.org/schema/cxf/camel-cxf.xsd 
+       http://cxf.apache.org/jaxrs
+       http://cxf.apache.org/schemas/jaxrs.xsd
+       http://www.springframework.org/schema/jdbc 
+       http://www.springframework.org/schema/jdbc/spring-jdbc-3.0.xsd
+       http://camel.apache.org/schema/spring
+       http://camel.apache.org/schema/spring/camel-spring.xsd
+       http://www.springframework.org/schema/context 
+       http://www.springframework.org/schema/context/spring-context.xsd ">
+
+	<!-- <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver" />
+		<property name="url" value="jdbc:postgresql://localhost:5432/database" />
+		<property name="username" value="root" />
+		<property name="password" value="root" />
+	</bean> -->
+	
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" >
+		<property name="driverClassName" value="org.postgresql.Driver"></property>
+		<property name="url" value="jdbc:postgresql://localhost:5432/cameldb?stringtype=unspecified"></property>
+		<property name="username" value="postgres"></property>
+		<property name="password" value="admin"></property>
+	</bean>
+	
+	<bean id="jt" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<!-- <jdbc:initialize-database data-source="dataSource" enabled="false"> 
+		<jdbc:script location="classpath:db-schema.sql" /> </jdbc:initialize-database> -->
+
+	<bean id="sqlComponent" class="org.apache.camel.component.sql.SqlComponent">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="employeeMapper" class="com.javainuse.util.EmployeeMapper" />
+
+	<!-- <bean id="employeeRouter" class="com.javainuse.router.EmployeeRouter" /> -->
+	
+	<bean id="Fkdao" class="com.javainuse.dao.Fkdaoimpl">
+		<property name="template" ref="jt"></property>
+	</bean>
+	
+	<bean id="FkService" class="com.javainuse.services.FkserviceImpl">
+		<property name="fkdao" ref="Fkdao"></property>
+	</bean>
+	
+	<routeContext id="myCoolRoutes" xmlns="http://camel.apache.org/schema/spring">
+        <route >
+			<from uri="direct:insert" />
+			<log message="Inserted new Book"/>
+			<bean ref="employeeMapper" method="getMap"/>
+			<to uri="sqlComponent:{{sql.insertEmployee}}" />
+		</route>
+		<route >
+			<from uri="direct:select"/>
+			<to uri="sqlComponent:{{sql.getAllEmployees}}"/>
+			<bean ref="employeeMapper" method="readEmployees"/>
+			<setExchangePattern pattern="InOut"/>			
+			<log message="${body}"/>
+		</route>
+		<route >
+			<from uri="direct:pushfkdata"/>
+			<!-- <bean ref="employeeMapper" method="getJson"/> -->
+			<!-- <to uri="sqlComponent:{{sql.insertFkData}}"/> -->
+			<to uri="bean:FkService?method=processdata"/>				
+			<!-- <setExchangePattern pattern="InOut"/> -->		
+			<log message="${body}"/>
+		</route>
+    </routeContext>
+
+	<camelContext id="employeeContext" xmlns="http://camel.apache.org/schema/spring">
+		<propertyPlaceholder id="placeholder" location="classpath:sql.properties" />		
+		<!-- <routeBuilder ref="employeeRouter" /> -->
+
+	 	<routeContextRef ref="myCoolRoutes"/> 
+
+	</camelContext>
+
+</beans>

@@ -1,0 +1,16 @@
+com\javainuse\services\FkserviceImpl.class
+com\javainuse\domain\Shipment_list.class
+com\javainuse\domain\Fkdata.class
+com\javainuse\router\EmployeeRouter.class
+com\javainuse\domain\Consignment_list.class
+com\javainuse\domain\Bag_list.class
+com\javainuse\domain\Data.class
+com\javainuse\domain\Request.class
+com\javainuse\services\FkService.class
+com\javainuse\domain\Employee.class
+com\javainuse\util\EmployeeMapper.class
+com\javainuse\dao\Fkdao.class
+com\javainuse\dao\Fkdaoimpl.class
+com\javainuse\domain\Customer.class
+com\javainuse\main\CamelMain.class
+com\javainuse\domain\Response.class
